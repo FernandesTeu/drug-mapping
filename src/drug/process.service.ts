@@ -1,15 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import * as puppeteer from 'puppeteer-core';
+import * as puppeteer from 'puppeteer';
 
 @Injectable()
 export class ProcessService {
   async search(query: string): Promise<string> {
-    let browser: puppeteer.Browser | null = null;
     try {
-      browser = await puppeteer.launch({
+      const browser = await puppeteer.launch({
         headless: true,
-        executablePath:
-          '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       });
 
@@ -54,6 +51,9 @@ export class ProcessService {
       // Get the full page content
       const content = await page.content();
 
+      if (typeof content !== 'string') {
+        throw new Error('Unexpected content type: Expected a string');
+      }
       return content;
     } catch (error) {
       if ((error as { name?: string }).name === 'TimeoutError') {
@@ -62,10 +62,6 @@ export class ProcessService {
         );
       }
       throw new Error(`Error during web scraping: ${error}`);
-    } finally {
-      if (browser) {
-        await browser.close();
-      }
     }
   }
 }
