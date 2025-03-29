@@ -58,33 +58,40 @@ OPENAI_API_KEY=your_api_key_here
 
 ## Cheerio
 
-To extract data from DailyMed web site. The configuration was simple, but was not enought, because
-in dailymed web site, we have a long input search to type what we want to searching.
-Cheerio it s good choice to manipulate html data, but the lib doesnt manipulate javascript on the screen, and then with Ai help, I choose pupperteer lib.
+To extract data from the DailyMed website, the initial configuration was simple but insufficient. The website features an extensive search input, which complicates the extraction process. While Cheerio is effective for manipulating HTML data, it cannot handle JavaScript executed on the page. Therefore, with the assistance of AI, I opted for the Puppeteer library.
 
 ## Puppeteer
 
-lib was a good choice. This lib can manipulate javascript in web page, as action, all the DOM element, and was simple identify input search and set the drug name to search into dailymed.
-First challeng with this lib was wating for the next page loaded. I identified an ID to verify if the screen was loaded, even checked the conditional I could load data was I needed.
-Second challend was about, that puppeteer using google Chrome under the roof to manipulate the data, and when I had to test some docker images to make it work.
+The library was a great choice, as it allows full interaction with JavaScript on the webpage. It enabled me to easily identify the search input field and set the drug name for querying DailyMed.
+
+The first challenge I faced was waiting for the results page to fully load. I solved this by identifying a specific element ID that confirmed the page was ready before proceeding to extract the data.
+
+The second challenge was related to Puppeteer running headless Chrome under the hood. To get it working properly, especially in a containerized environment, I had to test different Docker images to ensure compatibility.
 
 ## ChatGPD OpenAI
 
-It was a big challenge, I never used this api, and I found in documentation that there is a lin openai for nodejs that helps to improve get responses from openai.
-unhappier, I coud not solve this problema, because openai need a api Key, and I could find a way to use widhout pay for that. So, I copy the prompet and past into chatGPT web, and return me an object I need to continue my test.
+It was a big challenge since I had never used this API before. While exploring the documentation, I discovered the OpenAI SDK for Node.js, which helps streamline interactions with the API.
 
-In this service, on the catch, I return the manual object I has extract from chatGPT web, and I could keep going with the rest of the implementation. I don't have sure if it will be work. but I tried.
+Unfortunately, I couldn't resolve the issue because using the OpenAI API requires an API key, and I couldn’t find a way to use it without paying. As a workaround, I manually copied the prompt and pasted it into the ChatGPT web interface, which returned the object I needed to continue testing.
+
+In the service's catch block, I returned the manually extracted object from ChatGPT to keep the implementation moving forward. I'm not entirely sure if it will work as expected, but at least I gave it a try.
 
 ## Docker
 
-I did not have problem with, but I had to use a have image that have chromium to make puppeteer works. My time was short and I did not have time to study about others solutions. I sow in the puppeteer documentation that have a docker file to use, but I didn't have time to test.
+I didn’t have major issues with Puppeteer itself, but I had to use a Docker image that included Chromium to make it work properly. Since my time was limited, I couldn't explore alternative solutions.
+
+I saw in the Puppeteer documentation that there's an official Dockerfile available, but I didn’t have the chance to test it due to the tight schedule.
 
 ## Explanation Implimentation
 
-I follow this way to try implement the feature
+I followed this approach to implement the feature:
 
-- Using puppeteer to search content into dailymed web site and manipule DOM elements. The Program.service return hml elements to drug.service and follow the application
-- To find the content, I use Cheerio. This is a great lib to get DOM elements, but doens manipulate the javascript. Here I got the "Usage and Indicate" to return data foward.
-- APIOPENAI My best problem, because I dont find the way to use the apikey without pay. This services, receibe a pure data from dailymed.service, and return an object with information about the simptomns
-- Indications.service here I can merge all the information, updated the json file with data came from openai. I updated the json file and return an json object with the property DrugIndications
-- and the drug.service return this formated object
+- Puppeteer: I used Puppeteer to search for content on the DailyMed website and interact with DOM elements. The program.service returns HTML elements to the drug.service, which continues the application flow.
+
+- Cheerio: I used Cheerio to extract content from the returned HTML. It’s a great library for working with DOM elements, although it doesn't handle JavaScript. Using it, I extracted the "Usage and Indications" section.
+
+- OpenAI API: This was the biggest challenge, as I couldn’t find a way to use the API key without paying. As a workaround, I manually submitted the data to ChatGPT via the web interface and copied the response object for testing. The openai.service receives raw data from the dailymed.service and returns an object with symptom information.
+
+- Indications.service: This service merges all the collected information. It updates a JSON file with the data returned from OpenAI and then returns an object containing the DrugIndications property.
+
+Finally, the drug.service returns the formatted object.
