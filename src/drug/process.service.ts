@@ -15,27 +15,53 @@ export class ProcessService {
 
       const page = await browser.newPage();
 
-      // Acessa a página do DailyMed
+      // Configure navigation timeouts
+      page.setDefaultNavigationTimeout(30000);
+      page.setDefaultTimeout(30000);
+
+      // Navigate to DailyMed search page
       await page.goto('https://dailymed.nlm.nih.gov/dailymed/index.cfm', {
         waitUntil: 'networkidle2',
       });
 
-      // Aguarda o campo de busca e insere o termo
+      // Wait for and fill the search input
       await page.waitForSelector('input[name="query"]');
       await page.type('input[name="query"]', query);
 
-      // Simula o pressionamento da tecla Enter para submeter a busca
+      // Submit search
       await page.keyboard.press('Enter');
 
-      // Aguarda a navegação e o carregamento dos resultados
-      await page.waitForNavigation({ waitUntil: 'networkidle2' });
+      // Wait for search results to appear
+      await page.waitForFunction(
+        () => {
+          const h1 = document.querySelector('h1');
+          if (!h1?.textContent) {
+            return false;
+          }
+          return h1 && h1?.textContent.includes('Label:');
+        },
+        { timeout: 30000 },
+      );
 
-      // Obtém o conteúdo HTML da página resultante
+      // Wait a bit for results to stabilize
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Wait for detail page to load completely
+      await page.waitForSelector('.drug-label-sections', {
+        timeout: 30000,
+      });
+
+      // Get the full page content
       const content = await page.content();
 
       return content;
     } catch (error) {
-      throw new Error('Error during web scraping: ' + error);
+      if ((error as { name?: string }).name === 'TimeoutError') {
+        throw new Error(
+          'Operation timed out: The page took too long to respond',
+        );
+      }
+      throw new Error(`Error during web scraping: ${error}`);
     } finally {
       if (browser) {
         await browser.close();
